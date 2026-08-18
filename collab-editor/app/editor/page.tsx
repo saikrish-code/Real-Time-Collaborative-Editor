@@ -2,7 +2,7 @@ import Editor from "@/components/Editor";
 
 export const metadata = {
   title: "Editor | Collab Editor",
-  description: "Rich-text editor powered by Tiptap",
+  description: "Editor powered by Tiptap",
 };
 
 export default function EditorPage() {
@@ -14,7 +14,7 @@ export default function EditorPage() {
             Collab Editor
           </h1>
           <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-            A minimal rich-text editor. Changes are local only for now.
+            Type whatever you feel like.
           </p>
         </header>
 
