@@ -65,8 +65,9 @@ export default function Editor() {
     const params = new URLSearchParams(window.location.search);
     const roomId = params.get("room") || "default-room";
     
+    const wsServerUrl = process.env.NEXT_PUBLIC_WS_SERVER_URL || "ws://localhost:1234";
     const wsProvider = new WebsocketProvider(
-      "ws://localhost:1234",
+      wsServerUrl,
       roomId,
       doc
     );
