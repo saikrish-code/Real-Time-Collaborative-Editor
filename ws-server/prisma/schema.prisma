@@ -1,0 +1,17 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Document {
+  id        Int      @id @default(autoincrement())
+  roomId    String   @unique @map("room_id")
+  ydocState Bytes    @map("ydoc_state")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("documents")
+}
