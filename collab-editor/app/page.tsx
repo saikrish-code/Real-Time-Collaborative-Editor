@@ -8,7 +8,7 @@ export default function Home() {
           Collab Editor
         </h1>
         <p className="mt-2 text-zinc-500 dark:text-zinc-400">
-          A real-time collaborative rich-text editor
+          A real-time collaborative text editor
         </p>
         <Link
           href="/editor"
