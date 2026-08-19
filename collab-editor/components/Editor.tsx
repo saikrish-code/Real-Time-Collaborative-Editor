@@ -1,50 +1,48 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import Collaboration from "@tiptap/extension-collaboration";
+import CollaborationCaret from "@tiptap/extension-collaboration-caret";
 import * as Y from "yjs";
+import { WebsocketProvider } from "y-websocket";
 import Toolbar from "./Toolbar";
 
-export default function Editor() {
-  // Y.Doc is the root container for all shared CRDT state in a collaborative session.
-  // Think of it as the in-memory "document server" — every client editing the same
-  // room holds a Y.Doc that stays in sync via a network provider (not wired up yet).
-  // For now this instance lives only in the browser; edits are stored in the CRDT
-  // tree instead of Tiptap's default local ProseMirror doc.
-  const ydoc = useMemo(() => new Y.Doc(), []);
+const COLORS = [
+  "#f78da7", "#cf2e2e", "#ff6900", "#fcb900", "#7bdcb5",
+  "#00d084", "#8ed1fc", "#0693e3", "#abb8c3", "#9b51e0"
+];
 
-  // Y.XmlFragment (field: "default") is the shared type that stores the editor's
-  // document tree as a CRDT. Collaboration.bind maps ProseMirror ↔ this fragment;
-  // every keystroke mutates it. A future WebSocket provider will sync only the
-  // binary CRDT deltas between clients — not the full HTML string.
-  useEffect(() => {
-    return () => {
-      ydoc.destroy();
-    };
-  }, [ydoc]);
+function InnerEditor({ ydoc, provider }: { ydoc: Y.Doc; provider: WebsocketProvider }) {
+  const name = provider.awareness.getLocalState()?.user?.name || "User";
+  const color = provider.awareness.getLocalState()?.user?.color || "#000";
 
   const editor = useEditor(
     {
       extensions: [
-        // Collaboration ships its own undo/redo backed by Yjs — disable StarterKit's.
         StarterKit.configure({ undoRedo: false }),
         Underline,
         Collaboration.configure({
           document: ydoc,
-          field: "default", // ydoc.getXmlFragment("default")
+          field: "default",
+        }),
+        CollaborationCaret.configure({
+          provider,
+          user: {
+            name,
+            color,
+          },
         }),
       ],
-      // Do not pass `content` — the Y.XmlFragment is the single source of truth.
       editorProps: {
         attributes: {
           class: "tiptap-editor focus:outline-none",
         },
       },
     },
-    [ydoc],
+    [ydoc, provider]
   );
 
   return (
@@ -53,4 +51,52 @@ export default function Editor() {
       <EditorContent editor={editor} className="px-6 py-5" />
     </div>
   );
+}
+
+export default function Editor() {
+  const [clientReady, setClientReady] = useState(false);
+  const [ydoc, setYdoc] = useState<Y.Doc | null>(null);
+  const [provider, setProvider] = useState<WebsocketProvider | null>(null);
+
+  useEffect(() => {
+    const doc = new Y.Doc();
+    
+    // Get room from URL query or fallback
+    const params = new URLSearchParams(window.location.search);
+    const roomId = params.get("room") || "default-room";
+    
+    const wsProvider = new WebsocketProvider(
+      "ws://localhost:1234",
+      roomId,
+      doc
+    );
+
+    // Random user presence details
+    const randomName = `User ${Math.floor(Math.random() * 1000)}`;
+    const randomColor = COLORS[Math.floor(Math.random() * COLORS.length)];
+
+    wsProvider.awareness.setLocalStateField("user", {
+      name: randomName,
+      color: randomColor,
+    });
+
+    setYdoc(doc);
+    setProvider(wsProvider);
+    setClientReady(true);
+
+    return () => {
+      wsProvider.destroy();
+      doc.destroy();
+    };
+  }, []);
+
+  if (!clientReady || !ydoc || !provider) {
+    return (
+      <div className="flex h-40 items-center justify-center rounded-xl border border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900">
+        <span className="text-sm text-zinc-500 dark:text-zinc-400">Connecting to editor...</span>
+      </div>
+    );
+  }
+
+  return <InnerEditor ydoc={ydoc} provider={provider} />;
 }

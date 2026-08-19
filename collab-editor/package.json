@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@tiptap/extension-collaboration": "^3.30.1",
+    "@tiptap/extension-collaboration-caret": "^3.30.1",
     "@tiptap/extension-underline": "^3.30.1",
     "@tiptap/react": "^3.30.1",
     "@tiptap/starter-kit": "^3.30.1",
@@ -17,6 +18,7 @@
     "next": "14.2.35",
     "react": "^18",
     "react-dom": "^18",
+    "y-websocket": "^3.1.0",
     "yjs": "^13.6.32"
   },
   "devDependencies": {
